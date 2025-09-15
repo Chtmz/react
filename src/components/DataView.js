@@ -73,14 +73,24 @@ const DataView = () => {
 
   const handleExport = async () => {
     try {
+      const params = { ...filters };
+
+      // Remove empty filters
+      Object.keys(params).forEach(key => {
+        if (params[key] === '') {
+          delete params[key];
+        }
+      });
+
       const response = await axios.get('/api/merged-data/export', {
+        params,
         responseType: 'blob'
       });
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'merged_po_data.xlsx');
+      link.setAttribute('download', 'filtered_merged_po_data.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();

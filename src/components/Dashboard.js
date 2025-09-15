@@ -34,7 +34,7 @@ const Dashboard = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'MAD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
@@ -163,9 +163,9 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Project Values Bar Chart */}
+          {/* Account Values Bar Chart */}
           <div className="chart-card">
-            <h3 className="chart-title">Top Projects by Value</h3>
+            <h3 className="chart-title">Top Accounts by Value</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={chartsData.project_bar_chart?.labels.map((label, index) => ({
