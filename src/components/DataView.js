@@ -54,7 +54,7 @@ const DataView = () => {
     };
 
     fetchData();
-  }, [pagination.page, filters]);
+  }, [pagination.page, pagination.per_page, filters]); // Added pagination.per_page
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -193,7 +193,7 @@ const DataView = () => {
           <div className="btn-group">
             <button
               className="btn btn-secondary"
-              onClick={() => {}}
+              onClick={() => handlePageChange(1)}
               disabled={loading}
             >
               {loading ? 'Loading...' : 'Refresh'}
@@ -271,6 +271,31 @@ const DataView = () => {
           <p style={{ color: '#6b7280', marginBottom: '24px' }}>
             Upload your PO and Acceptance files to see merged data here.
           </p>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {data.length > 0 && pagination.total_pages > 1 && (
+        <div className="pagination-controls" style={{ marginTop: '24px', textAlign: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={!pagination.has_prev}
+            style={{ marginRight: '8px' }}
+          >
+            Previous
+          </button>
+          <span>
+            Page {pagination.page} of {pagination.total_pages}
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={!pagination.has_next}
+            style={{ marginLeft: '8px' }}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
