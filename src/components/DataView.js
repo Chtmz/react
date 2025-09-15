@@ -21,49 +21,43 @@ const DataView = () => {
   });
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const params = {
+          page: pagination.page,
+          per_page: pagination.per_page,
+          ...filters
+        };
+
+        Object.keys(params).forEach(key => {
+          if (params[key] === '') delete params[key];
+        });
+
+        const response = await axios.get('/api/merged-data', { params });
+
+        setData(response.data.items);
+        setPagination(prev => ({
+          ...prev,
+          total_count: response.data.total_count,
+          total_pages: response.data.total_pages,
+          has_next: response.data.has_next,
+          has_prev: response.data.has_prev
+        }));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
   }, [pagination.page, filters]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      const params = {
-        page: pagination.page,
-        per_page: pagination.per_page,
-        ...filters
-      };
-
-      // Remove empty filters
-      Object.keys(params).forEach(key => {
-        if (params[key] === '') {
-          delete params[key];
-        }
-      });
-
-      const response = await axios.get('/api/merged-data', { params });
-      
-      setData(response.data.items);
-      setPagination(prev => ({
-        ...prev,
-        total_count: response.data.total_count,
-        total_pages: response.data.total_pages,
-        has_next: response.data.has_next,
-        has_prev: response.data.has_prev
-      }));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -74,19 +68,15 @@ const DataView = () => {
   const handleExport = async () => {
     try {
       const params = { ...filters };
-
-      // Remove empty filters
       Object.keys(params).forEach(key => {
-        if (params[key] === '') {
-          delete params[key];
-        }
+        if (params[key] === '') delete params[key];
       });
 
       const response = await axios.get('/api/merged-data/export', {
         params,
         responseType: 'blob'
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -124,29 +114,23 @@ const DataView = () => {
   };
 
   if (loading && data.length === 0) {
-    return (
-      <div className="loading-spinner">
-        Loading data...
-      </div>
-    );
+    return <div className="loading-spinner">Loading data...</div>;
   }
 
   return (
     <div className="data-view">
+      {/* Dashboard Header */}
       <div className="dashboard-header">
         <h1 className="dashboard-title">Merged Data View</h1>
         <p className="dashboard-subtitle">Combined purchase orders and acceptance data</p>
       </div>
 
-      {error && (
-        <div className="alert alert-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="alert alert-error">{error}</div>}
 
       {/* Filters and Controls */}
       <div className="data-controls">
         <div className="filters-row">
+          {/* Status Filter */}
           <div className="filter-group">
             <label>Status</label>
             <select
@@ -163,6 +147,7 @@ const DataView = () => {
             </select>
           </div>
 
+          {/* Category Filter */}
           <div className="filter-group">
             <label>Category</label>
             <select
@@ -178,6 +163,7 @@ const DataView = () => {
             </select>
           </div>
 
+          {/* Project Name Filter */}
           <div className="filter-group">
             <label>Project Name</label>
             <input
@@ -189,6 +175,7 @@ const DataView = () => {
             />
           </div>
 
+          {/* Search Filter */}
           <div className="filter-group">
             <label>Search</label>
             <input
@@ -201,23 +188,20 @@ const DataView = () => {
           </div>
         </div>
 
+        {/* Actions */}
         <div className="actions-row">
           <div className="btn-group">
             <button
               className="btn btn-secondary"
-              onClick={fetchData}
+              onClick={() => {}}
               disabled={loading}
             >
               {loading ? 'Loading...' : 'Refresh'}
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleExport}
-            >
+            <button className="btn btn-primary" onClick={handleExport}>
               Export to Excel
             </button>
           </div>
-          
           <div className="pagination-info">
             Showing {data.length} of {pagination.total_count.toLocaleString()} records
           </div>
@@ -257,10 +241,9 @@ const DataView = () => {
                   <td>{item.site_code || '-'}</td>
                   <td>{item.category}</td>
                   <td title={item.item_desc}>
-                    {item.item_desc?.length > 50 
-                      ? item.item_desc.substring(0, 50) + '...' 
-                      : item.item_desc || '-'
-                    }
+                    {item.item_desc?.length > 50
+                      ? item.item_desc.substring(0, 50) + '...'
+                      : item.item_desc || '-'}
                   </td>
                   <td>{item.payment_terms || '-'}</td>
                   <td>{formatCurrency(item.unit_price)}</td>
@@ -280,81 +263,14 @@ const DataView = () => {
               ))}
             </tbody>
           </table>
-
-          {/* Pagination */}
-          <div className="pagination">
-            <div className="pagination-info">
-              Page {pagination.page} of {pagination.total_pages}
-            </div>
-            
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(1)}
-                disabled={!pagination.has_prev}
-              >
-                First
-              </button>
-              
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={!pagination.has_prev}
-              >
-                Previous
-              </button>
-
-              {/* Page numbers */}
-              {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
-                const pageNum = Math.max(1, Math.min(
-                  pagination.page - 2 + i,
-                  pagination.total_pages - 4 + i
-                ));
-                
-                if (pageNum <= pagination.total_pages) {
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`pagination-btn ${pageNum === pagination.page ? 'active' : ''}`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-                return null;
-              })}
-
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={!pagination.has_next}
-              >
-                Next
-              </button>
-              
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(pagination.total_pages)}
-                disabled={!pagination.has_next}
-              >
-                Last
-              </button>
-            </div>
-          </div>
         </div>
       ) : (
-        <div className="chart-card">
-          <div style={{ textAlign: 'center', padding: '48px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-            <h3>No Data Available</h3>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-              Upload your PO and Acceptance files to see merged data here.
-            </p>
-            <button className="btn btn-primary" onClick={() => window.location.href = '/upload'}>
-              Upload Files
-            </button>
-          </div>
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+          <h3>No Data Available</h3>
+          <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+            Upload your PO and Acceptance files to see merged data here.
+          </p>
         </div>
       )}
     </div>
